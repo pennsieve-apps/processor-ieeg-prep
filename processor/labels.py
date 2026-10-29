@@ -5,6 +5,9 @@ Columns: subject, recording_id (empty = every recording of the subject), channel
 name; empty = a recording-level row), any of soz, resected, onset, spread (true/false), and
 onset_s on recording-level rows (seizure onset in seconds from the recording start).
 
+Any other column filled on a recording-level row (channel empty), e.g. `stim_induced` or `lvfa`,
+is carried into recordings.csv as a column of the same name (lower-cased), value as written.
+
 A label column that a recording (onset, spread) or subject (soz, resected) has any channel
 rows for is complete for it: contacts without a row get `false`. Columns nobody filled stay
 unknown (empty).
@@ -23,6 +26,10 @@ log = logging.getLogger("processor-ieeg-prep")
 
 PER_RECORDING = ("onset", "spread")
 PER_SUBJECT = ("soz", "resected")
+# Columns with a meaning of their own; every other column of a recording-level row is carried
+# into recordings.csv as is.
+KNOWN_COLUMNS = {"subject", "recording_id", "channel", "onset_s", *LABEL_COLUMNS}
+NA = ("", "n/a", "na", "nan")
 
 
 def norm_subject(s: str) -> str:
@@ -50,6 +57,7 @@ class LabelRow:
     values: dict[str, bool | None]
     onset_s: float | None
     line: int
+    extra: dict[str, str] = field(default_factory=dict)  # recording-level rows: other columns
 
 
 @dataclass
@@ -57,6 +65,7 @@ class LabelSet:
     path: Path | None = None
     rows: list[LabelRow] = field(default_factory=list)
     used: set[int] = field(default_factory=set)
+    extra_columns: list[str] = field(default_factory=list)  # filled on a recording-level row, in file order
 
     def for_recording(self, subject: str, recording_ids: set[str]) -> list[LabelRow]:
         sub = norm_subject(subject)
@@ -95,11 +104,15 @@ def read_labels(path: Path | None) -> LabelSet:
                     onset = float(r["onset_s"])
                 except ValueError:
                     log.warning("%s line %d: onset_s %r is not a number; ignored", path.name, i, r["onset_s"])
+            channel = r.get("channel", "")
+            extra = {} if channel else {k: v for k, v in r.items()
+                                        if k and k not in KNOWN_COLUMNS and v.lower() not in NA}
             rows.append(LabelRow(subject=r.get("subject", ""), recording=norm_recording(r.get("recording_id", "")),
-                                 channel=r.get("channel", ""),
+                                 channel=channel,
                                  values={c: parse_bool(r.get(c)) for c in LABEL_COLUMNS if c in r},
-                                 onset_s=onset, line=i))
-    return LabelSet(path=path, rows=rows)
+                                 onset_s=onset, line=i, extra=extra))
+    filled = {k for r in rows for k in r.extra}
+    return LabelSet(path=path, rows=rows, extra_columns=[h for h in header if h in filled])
 
 
 @dataclass
@@ -109,6 +122,7 @@ class RecordingLabels:
     complete: set[str] = field(default_factory=set)  # label columns known for every contact
     onset_s: float | None = None
     onset_source: str = ""
+    extra: dict[str, str] = field(default_factory=dict)  # recording-level columns for recordings.csv
     unmatched_channels: list[str] = field(default_factory=list)
 
 
@@ -119,6 +133,12 @@ def resolve(rows: list[LabelRow], contact_names: list[str], file_name: str) -> R
     filled: set[str] = set()
     for r in rows:
         if not r.channel:
+            for k, v in r.extra.items():
+                if k in out.extra and out.extra[k] != v:
+                    log.warning("%s line %d: two %s values for this recording (%r, %r); using the first",
+                                file_name, r.line, k, out.extra[k], v)
+                else:
+                    out.extra[k] = v
             if r.onset_s is not None:
                 if out.onset_s is not None and abs(out.onset_s - r.onset_s) > 1e-6:
                     log.warning("%s: two onset_s rows for this recording (%g, %g); using the first",

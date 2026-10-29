@@ -84,7 +84,8 @@ parameters:
     label: Labels file
     description: >-
       Name of the optional labels CSV looked for anywhere in the input: subject, recording_id,
-      channel, soz, resected, onset, spread, onset_s (see the README).
+      channel, soz, resected, onset, spread, onset_s; any other column of a recording-level row
+      (channel empty), e.g. stim_induced or lvfa, is copied into recordings.csv (see the README).
     defaultValue: labels.csv
   - name: FLAT_UV
     type: number

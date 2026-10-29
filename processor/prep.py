@@ -577,6 +577,8 @@ def _process(c, src: S.Source, notes: list[str], params: Params, labelset: L.Lab
         "baseline_end_s": fmt(baseline[1], 3) if baseline else "",
         "source_format": source_format(c),
     }
+    # labels.csv recording-level columns without a meaning of their own (stim_induced, lvfa, ...)
+    rec_row.update({k: v for k, v in rl.extra.items() if k not in rec_row})
     dropped = {}
     for cl in classes:
         if not cl.keep:

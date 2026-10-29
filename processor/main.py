@@ -270,7 +270,13 @@ def main() -> int:
         write_csv(d / f"{stem}_desc-preproc_electrodes.tsv", el_cols[(sub, ses)], list(rows.values()), "\t")
 
     rec_rows.sort(key=lambda r: r["recording_id"])
-    write_csv(ieeg_dir / "recordings.csv", RECORDING_COLUMNS, rec_rows)
+    # labels.csv recording-level columns (stim_induced, lvfa, ...) follow the standard ones
+    clash = [k for k in labelset.extra_columns if k in RECORDING_COLUMNS]
+    if clash:
+        log.warning("labels.csv column(s) %s name recordings.csv columns ieeg-prep computes; ignored",
+                    ", ".join(clash))
+    extra_cols = [k for k in labelset.extra_columns if k not in RECORDING_COLUMNS]
+    write_csv(ieeg_dir / "recordings.csv", RECORDING_COLUMNS + extra_cols, rec_rows)
     write_csv(qc_dir / "qc.csv", QC_COLUMNS, qc_rows)
     finished = datetime.now(timezone.utc)
     dd = {

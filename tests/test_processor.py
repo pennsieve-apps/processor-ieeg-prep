@@ -172,6 +172,19 @@ def test_labels_complete_columns(tmp_path):
     assert L.norm_recording("sub-X_task-a_ieeg.edf") == "sub-X_task-a"
 
 
+def test_labels_recording_level_extra_columns(tmp_path):
+    """Other columns of recording-level rows go to recordings.csv; channel rows' are not carried."""
+    p = tmp_path / "labels.csv"
+    p.write_text("subject,recording_id,channel,onset,onset_s,Stim_Induced,lvfa,note\n"
+                 "P1,r1,,,12.5,true,n/a,\nP1,r1,LA1,true,,,,x\nP1,r2,,,3,false,yes,\n")
+    ls = L.read_labels(p)
+    assert ls.extra_columns == ["stim_induced", "lvfa"]
+    r1 = L.resolve(ls.for_recording("P1", {"r1"}), ["LA01"], "labels.csv")
+    assert r1.extra == {"stim_induced": "true"}
+    r2 = L.resolve(ls.for_recording("P1", {"r2"}), ["LA01"], "labels.csv")
+    assert r2.extra == {"stim_induced": "false", "lvfa": "yes"}
+
+
 # ---------------------------------------------------------------------------------- end to end
 
 def test_end_to_end_contract(default_run):
@@ -179,12 +192,15 @@ def test_end_to_end_contract(default_run):
     assert rc == 0
     ieeg, qc = out / "ieeg", out / "qc"
     recs = read_csv(ieeg / "recordings.csv")
-    assert list(recs[0].keys()) == RECORDING_COLUMNS
+    # labels.csv recording-level columns without a meaning of their own follow the standard ones
+    assert list(recs[0].keys()) == RECORDING_COLUMNS + ["stim_induced", "lvfa"]
     by = {r["recording_id"]: r for r in recs}
     assert set(by) == {STEM, "sub-patient02_task-ieeg"}
     r = by[STEM]
     assert r["montage"] == "bipolar" and r["kind"] == "ictal" and r["source_format"] == "bids-edf"
     assert float(r["onset_s"]) == 40.5                                 # labels.csv beats events.tsv (39.0)
+    assert (r["stim_induced"], r["lvfa"]) == ("false", "true")
+    assert (by["sub-patient02_task-ieeg"]["stim_induced"], by["sub-patient02_task-ieeg"]["lvfa"]) == ("", "")
     assert (float(r["baseline_start_s"]), float(r["baseline_end_s"])) == (0.0, 30.5)
     assert (ieeg / r["path"]).is_file()
     dd = json.loads((ieeg / "dataset_description.json").read_text())

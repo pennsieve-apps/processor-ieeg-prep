@@ -137,15 +137,18 @@ def make(out: Path) -> Path:
     labels = {k: (f"POL {k[:2]}{int(k[2:])}" if k in CONTACTS else k) for k in plain}
     labels["C3"] = "EEG C3-Ref"
     write_edf(out / "plain" / "patient02.edf", plain, labels, annotations=[(30.0, 2.0, "Seizure")])
-    # --- labels.csv: expert onset for the BIDS recording (overrides events.tsv) and SOZ for patient02
+    # --- labels.csv: expert onset and seizure flags for the BIDS recording (onset overrides events.tsv),
+    #     SOZ for patient02
     with open(out / "labels.csv", "w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh, lineterminator="\n")
-        w.writerow(["subject", "recording_id", "channel", "soz", "resected", "onset", "spread", "onset_s"])
-        w.writerow(["P01", stem, "", "", "", "", "", "40.5"])
+        # stim_induced / lvfa: recording-level columns ieeg-prep carries into recordings.csv as is
+        w.writerow(["subject", "recording_id", "channel", "soz", "resected", "onset", "spread", "onset_s",
+                    "stim_induced", "lvfa"])
+        w.writerow(["P01", stem, "", "", "", "", "", "40.5", "false", "true"])
         for c in ("LA01", "LA02"):
-            w.writerow(["P01", stem, c, "", "", "true", "true", ""])
-        w.writerow(["P01", stem, "LA03", "", "", "", "true", ""])
-        w.writerow(["patient02", "", "LA1", "true", "", "", "", ""])
+            w.writerow(["P01", stem, c, "", "", "true", "true", "", "", ""])
+        w.writerow(["P01", stem, "LA03", "", "", "", "true", "", "", ""])
+        w.writerow(["patient02", "", "LA1", "true", "", "", "", "", "", ""])
     return out
 
 

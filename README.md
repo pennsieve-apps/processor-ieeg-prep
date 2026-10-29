@@ -102,6 +102,10 @@ MNE-BIDS, and every decision is recorded in `provenance.json`.
    A bipolar channel is `true` when either contact is, `false` when both are `false`, unknown
    otherwise. A `labels.csv` column that a recording (`onset`, `spread`) or subject (`soz`,
    `resected`) has any rows for is complete for it: contacts without a row are `false`.
+   Any other column filled on a recording-level row of `labels.csv` (`channel` empty), e.g.
+   `stim_induced` or `lvfa`, is copied into `recordings.csv` as a column of the same name
+   (lower-cased; value as written; empty for recordings without such a row). A column named
+   like one ieeg-prep computes (`kind`, `baseline_start_s`, ...) is ignored with a warning.
 6. **Seizure onset and baseline.** Onset: `labels.csv` `onset_s`, else the first `_events.tsv`
    row whose `trial_type` is `seizure`/`ictal`/`sz`…, else such an EDF+/FIF annotation. Its end
    (for the seizure event's duration) comes from the source event when there is one. Baseline:
@@ -132,7 +136,8 @@ written too, with `status=bad`. `as-recorded` keeps every kept channel, bad ones
 path` (EDF, relative to the port), `sfreq, n_channels, n_good, duration_s, montage` (`bipolar`,
 `car`, `as-recorded`), `kind` (`ictal`, `interictal`, `unknown`), `onset_s, baseline_start_s,
 baseline_end_s` (empty when unknown), `source_format` (`bids-edf`, `edf`, `bdf`,
-`brainvision`, `fif`, `mef3`, with `bids-` for BIDS inputs).
+`brainvision`, `fif`, `mef3`, with `bids-` for BIDS inputs), then any extra recording-level
+columns of `labels.csv` (e.g. `stim_induced, lvfa`; see Labels above).
 
 **`ieeg/sub-<label>/[ses-<label>/]ieeg/<stem>_desc-preproc_ieeg.edf`**: EDF+ (16-bit), µV, the
 output channels in recording order, data records of 1 s (the last incomplete second, < 1 s, is
