@@ -1,0 +1,31 @@
+# Runtime dependencies, pinned (pip freeze of a clean Python 3.12 venv with mne, mne-bids, edfio,
+# pymef, numpy, scipy, matplotlib). Binary wheels exist for linux/amd64 for all of them.
+certifi==2026.10.23
+charset-normalizer==3.5.2
+contourpy==1.4.0
+cycler==0.12.1
+decorator==5.3.1
+edfio==0.4.18
+fonttools==4.68.0
+idna==3.20
+Jinja2==3.1.6
+kiwisolver==1.5.1
+lazy-loader==0.6
+MarkupSafe==3.0.4
+matplotlib==3.11.2
+mne==1.13.2
+mne-bids==0.20.0
+numpy==2.5.4
+packaging==26.3
+pillow==13.0.0
+platformdirs==4.14.0
+pooch==1.9.0
+pymef==1.4.8
+pyparsing==3.3.3
+python-dateutil==3.0.0
+requests==2.34.2
+scipy==1.18.1
+six==1.17.0
+tqdm==4.70.1
+tzdata==2026.6
+urllib3==2.8.0

@@ -1,0 +1,12 @@
+services:
+  processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    env_file:
+      - dev.env
+    mem_limit: 2g
+    volumes:
+      - ./data/fixture:/data/input:ro
+      - ./data/output:/data/output
