@@ -12,6 +12,9 @@ import fnmatch
 import logging
 import os
 import re
+import tarfile
+import tempfile
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -54,6 +57,30 @@ def walk(root: Path) -> tuple[list[Path], list[Path]]:
     return files, mefd
 
 
+def unpack_mefd(archive: Path) -> list[Path]:
+    """Unpack a compressed MEF3 session (*.mefd.zip/.tar/.tar.gz) under /tmp; returns the .mefd folders."""
+    dest = Path(tempfile.mkdtemp(prefix="mefd-"))
+    if archive.name.lower().endswith(".zip"):
+        with zipfile.ZipFile(archive) as z:
+            for m in z.namelist():
+                if m.startswith("/") or ".." in Path(m).parts:
+                    raise ValueError(f"unsafe path in archive: {m}")
+            z.extractall(dest)
+    else:
+        with tarfile.open(archive) as t:
+            t.extractall(dest, filter="data")
+    found = [p for p in dest.rglob("*") if p.is_dir() and p.name.lower().endswith(".mefd")]
+    if not found:  # the archive holds the session's contents without the .mefd folder around them
+        name = re.sub(r"\.(zip|tar|tar\.gz|tgz)$", "", archive.name, flags=re.IGNORECASE)
+        session = dest / name
+        session.mkdir()
+        for item in list(dest.iterdir()):
+            if item != session:
+                item.rename(session / item.name)
+        found = [session]
+    return found
+
+
 @dataclass
 class Candidate:
     path: Path
@@ -67,6 +94,7 @@ class Candidate:
     run: str
     bids_root: Path | None = None
     subject_dir: Path | None = None
+    origin: str = ""              # path relative to INPUT_DIR as found (an archive for unpacked MEF3)
 
 
 def _alnum(s: str) -> str:
@@ -115,10 +143,22 @@ def find_recordings(input_dir: Path, pattern: str) -> tuple[list[Candidate], lis
         out.append(describe(p, fmt))
     for d in mefd:
         out.append(describe(d, "mef3"))
+    for p in files:
+        if re.search(r"\.mefd\.(zip|tar|tar\.gz|tgz)$", p.name, re.IGNORECASE):
+            try:
+                for d in unpack_mefd(p):
+                    c = describe(d, "mef3")
+                    c.origin = str(p.relative_to(input_dir))
+                    out.append(c)
+            except (OSError, ValueError, zipfile.BadZipFile, tarfile.TarError) as exc:
+                notes.append(f"{p.relative_to(input_dir)}: cannot unpack ({exc}); skipped")
+    for c in out:
+        if not c.origin:
+            c.origin = str(c.path.relative_to(input_dir))
     pats = [s.strip() for s in (pattern or "*").split(",") if s.strip()] or ["*"]
     sel = []
     for c in out:
-        rel = str(c.path.relative_to(input_dir))
+        rel = c.origin
         if any(fnmatch.fnmatch(c.recording_id, p) or fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(c.path.name, p)
                for p in pats):
             sel.append(c)

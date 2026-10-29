@@ -325,3 +325,28 @@ def test_no_input(tmp_path, monkeypatch):
 def test_bad_parameter(fixture_dir, tmp_path, monkeypatch):
     assert run(monkeypatch, fixture_dir, tmp_path, MONTAGE="laplacian") == 2
     shutil.rmtree(tmp_path, ignore_errors=True)
+
+
+def test_mef3_zip(tmp_path, monkeypatch):
+    """A MEF3 session delivered as one compressed file is unpacked under /tmp and read."""
+    import zipfile
+    from pymef.mef_session import MefSession
+    sig = F.make_signals()
+    sess = tmp_path / "build" / "patient05.mefd"
+    sess.parent.mkdir()
+    ms = MefSession(str(sess), None, new_session=True)
+    n, start = 10000, 946684800000000
+    for name in F.CONTACTS[:4]:
+        ms.write_mef_ts_segment_metadata(name, 0, None, None, start, start + int(n / F.SFREQ * 1e6),
+                                         {"sampling_frequency": F.SFREQ, "units_conversion_factor": 1.0,
+                                          "units_description": "uV"}, {})
+        ms.write_mef_ts_segment_data(name, 0, None, None, 1000, np.round(sig[name][:n]).astype(np.int32))
+    (tmp_path / "in").mkdir()
+    with zipfile.ZipFile(tmp_path / "in" / "patient05.mefd.zip", "w") as z:
+        for f in sess.rglob("*"):
+            z.write(f, f.relative_to(sess))                       # contents without the .mefd folder
+    assert run(monkeypatch, tmp_path / "in", tmp_path / "out", VERIFY_EDF="false") == 0
+    rec = read_csv(tmp_path / "out" / "ieeg" / "recordings.csv")[0]
+    assert rec["recording_id"] == "sub-patient05_task-ieeg" and rec["montage"] == "bipolar"
+    prov = json.loads((tmp_path / "out" / "ieeg" / "provenance.json").read_text())
+    assert prov["recordings"][0]["input"] == "patient05.mefd.zip"

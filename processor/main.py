@@ -213,9 +213,9 @@ def main() -> int:
     skipped: list[dict] = []
     for c in candidates:
         if ids[c.recording_id] > 1:
-            log.error("%s: recording id %s is used by %d inputs, skipped", rel(c.path), c.recording_id,
+            log.error("%s: recording id %s is used by %d inputs, skipped", c.origin, c.recording_id,
                       ids[c.recording_id])
-            skipped.append({"input": rel(c.path), "recording_id": c.recording_id, "reason": "duplicate recording id"})
+            skipped.append({"input": c.origin, "recording_id": c.recording_id, "reason": "duplicate recording id"})
     candidates = [c for c in candidates if ids[c.recording_id] == 1]
 
     rec_rows: list[dict] = []
@@ -228,10 +228,10 @@ def main() -> int:
         try:
             res = P.process(c, params, labelset, ieeg_dir, app_version, input_dir)
         except Exception as exc:  # noqa: BLE001 - one recording's failure must not sink the run
-            log.error("%s: FAILED: %s\n%s", rel(c.path), exc, traceback.format_exc())
-            skipped.append({"input": rel(c.path), "recording_id": c.recording_id,
+            log.error("%s: FAILED: %s\n%s", c.origin, exc, traceback.format_exc())
+            skipped.append({"input": c.origin, "recording_id": c.recording_id,
                             "reason": f"{type(exc).__name__}: {exc}"})
-            prov_recs.append({"recording_id": c.recording_id, "input": rel(c.path), "status": "failed",
+            prov_recs.append({"recording_id": c.recording_id, "input": c.origin, "status": "failed",
                               "error": str(exc)})
             continue
         rec_rows.append(res.recording_row)
@@ -247,7 +247,7 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001 - a plot must not fail the recording
             log.warning("%s: QC figure failed: %s", c.recording_id, exc)
         v = d.get("verification") or {}
-        prov_recs.append({"recording_id": c.recording_id, "input": rel(c.path), "status": "ok",
+        prov_recs.append({"recording_id": c.recording_id, "input": c.origin, "status": "ok",
                           "output": res.recording_row["path"], "seconds": d["seconds"]["total"]})
         log.info("%s: %d source ch -> %d kept (%d bad, dropped %s) -> %s %d ch (%d good); %s; onset %s; "
                  "line %g Hz; EDF read-back max error %.3g µV (%.2f steps); %.1fs (read %.1fs, write %.1fs); "
@@ -288,7 +288,7 @@ def main() -> int:
         "startedAt": started.isoformat(timespec="seconds"), "finishedAt": finished.isoformat(timespec="seconds"),
         "seconds": round(time.monotonic() - t_start, 2), "peakRssMB": round(peak_rss_mb(), 1),
         "parameters": raw_params,
-        "inputsFound": {"recordings": [rel(c.path) for c in candidates] + [s["input"] for s in skipped
+        "inputsFound": {"recordings": [c.origin for c in candidates] + [s["input"] for s in skipped
                                                                           if s["reason"] == "duplicate recording id"],
                         "labels": rel(labels_path) if labels_path else None},
         "recordings": prov_recs, "skipped": skipped, "details": details,

@@ -512,7 +512,7 @@ def _process(c, src: S.Source, notes: list[str], params: Params, labelset: L.Lab
         **{k: sidecar[k] for k in ("Manufacturer", "ManufacturersModelName", "InstitutionName",
                                    "iEEGPlacementScheme", "iEEGGround", "ElectrodeManufacturer",
                                    "HardwareFilters", "RecordingType") if k in sidecar and k != "RecordingType"},
-        "Sources": [str(c.path.relative_to(input_dir))],
+        "Sources": [c.origin],
         "PennsieveIeegPrep": {
             "montage": mode, "montageRequested": params.montage, "lineFrequencySource": lf_source,
             "sourceFormat": source_format(c), "reader": src.reader, "qcWindow": qc_window,
@@ -576,13 +576,13 @@ def _process(c, src: S.Source, notes: list[str], params: Params, labelset: L.Lab
         if not cl.keep:
             dropped[cl.dropped_type] = dropped.get(cl.dropped_type, 0) + 1
     details = {
-        "input": str(c.path.relative_to(input_dir)), "reader": src.reader, "sfreq": sfreq,
+        "input": c.origin, "reader": src.reader, "sfreq": sfreq,
         "source_channels": len(names), "kept_contacts": len(kept), "dropped": dropped,
         "bad_contacts": int(sum(1 for s_ in status if s_ == "bad")), "montage": mode,
         "output_channels": len(chans), "good_channels": n_good, "line_freq": line_freq,
         "line_freq_source": lf_source, "filters": plan.describe(), "onset_s": onset_s, "onset_source": onset_source,
         "kind": kind, "baseline": baseline, "qc_window": qc_window,
-        "sidecars": {k: (str(v.relative_to(input_dir)) if v else None) for k, v in
+        "sidecars": {k: (_rel(v, input_dir) if v else None) for k, v in
                      (("channels", B.sidecar(c.path, "channels.tsv")), ("events", ev_path), ("ieeg", js_path),
                       ("electrodes", el_path), ("coordsystem", cs_path))},
         "labels_csv_rows": len(label_rows), "labels_known": sorted(
@@ -599,6 +599,13 @@ def _process(c, src: S.Source, notes: list[str], params: Params, labelset: L.Lab
             "onset_s": onset_s, "montage": mode, "kind": kind}
     return Result(rec_row, qc_rows, el_rows, ["name", "x", "y", "z", "size", "space", "roi", "soz", "resected"]
                   + elec.extra_columns, details, plot)
+
+
+def _rel(p: Path, root: Path) -> str:
+    try:
+        return str(p.relative_to(root))
+    except ValueError:
+        return str(p)
 
 
 def source_format(c: S.Candidate) -> str:
