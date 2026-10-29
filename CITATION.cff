@@ -1,0 +1,247 @@
+cff-version: "1.2.0"
+message: If you use this app, please cite it and the works it builds on, listed under references.
+type: software
+title: iEEG Prep
+abstract: The first step of the epilepsy iEEG workflows. Reads BIDS-iEEG datasets (MNE-BIDS) or plain
+  EDF, BrainVision, FIF and MEF3 recordings with optional expert labels, keeps the SEEG/ECoG channels,
+  finds bad channels, re-references (bipolar by default), notch- and high-pass-filters, and writes one
+  BIDS-iEEG derivative (EDF+ with per-channel range and sidecars carrying SOZ, resected, onset and
+  spread labels and coordinates) plus a QC table and figures.
+authors:
+- name: Pennsieve (University of Pennsylvania)
+repository-code: https://github.com/pennsieve-apps/processor-ieeg-prep
+license: Apache-2.0
+keywords:
+- ieeg
+- seeg
+- ecog
+- epilepsy
+- electrophysiology
+- bids
+- preprocessing
+- quality-control
+references:
+- type: article
+  title: 'MEG and EEG data analysis with MNE-Python'
+  authors:
+  - family-names: 'Gramfort'
+    given-names: 'Alexandre'
+  year: 2013
+  journal: 'Frontiers in Neuroscience'
+  volume: '7'
+  start: '267'
+  doi: 10.3389/fnins.2013.00267
+  notes: 'PMID: 24431986'
+- type: article
+  title: 'MNE-BIDS: Organizing electrophysiological data into the BIDS format and facilitating their analysis'
+  authors:
+  - family-names: 'Appelhoff'
+    given-names: 'Stefan'
+  - family-names: 'Sanderson'
+    given-names: 'Matthew'
+  - family-names: 'Brooks'
+    given-names: 'Teon'
+  - family-names: 'van Vliet'
+    given-names: 'Marijn'
+  - family-names: 'Quentin'
+    given-names: 'Romain'
+  - family-names: 'Holdgraf'
+    given-names: 'Chris'
+  - family-names: 'Chaumon'
+    given-names: 'Maximilien'
+  - family-names: 'Mikulan'
+    given-names: 'Ezequiel'
+  - family-names: 'Tavabi'
+    given-names: 'Kambiz'
+  - family-names: 'Höchenberger'
+    given-names: 'Richard'
+  - family-names: 'Welke'
+    given-names: 'Dominik'
+  - family-names: 'Brunner'
+    given-names: 'Clemens'
+  - family-names: 'Rockhill'
+    given-names: 'Alexander'
+  - family-names: 'Larson'
+    given-names: 'Eric'
+  - family-names: 'Gramfort'
+    given-names: 'Alexandre'
+  - family-names: 'Jas'
+    given-names: 'Mainak'
+  year: 2019
+  journal: 'Journal of Open Source Software'
+  volume: '4'
+  start: '1896'
+  doi: 10.21105/joss.01896
+  notes: 'PMID: 35990374'
+- type: article
+  title: 'iEEG-BIDS, extending the Brain Imaging Data Structure specification to human intracranial electrophysiology'
+  authors:
+  - family-names: 'Holdgraf'
+    given-names: 'Christopher'
+  - family-names: 'Appelhoff'
+    given-names: 'Stefan'
+  - family-names: 'Bickel'
+    given-names: 'Stephan'
+  - family-names: 'Bouchard'
+    given-names: 'Kristofer'
+  - family-names: 'D’Ambrosio'
+    given-names: 'Sasha'
+  - family-names: 'David'
+    given-names: 'Olivier'
+  - family-names: 'Devinsky'
+    given-names: 'Orrin'
+  - family-names: 'Dichter'
+    given-names: 'Benjamin'
+  - family-names: 'Flinker'
+    given-names: 'Adeen'
+  - family-names: 'Foster'
+    given-names: 'Brett L.'
+  - family-names: 'Gorgolewski'
+    given-names: 'Krzysztof J.'
+  - family-names: 'Groen'
+    given-names: 'Iris'
+  - family-names: 'Groppe'
+    given-names: 'David'
+  - family-names: 'Gunduz'
+    given-names: 'Aysegul'
+  - family-names: 'Hamilton'
+    given-names: 'Liberty'
+  - family-names: 'Honey'
+    given-names: 'Christopher J.'
+  - family-names: 'Jas'
+    given-names: 'Mainak'
+  - family-names: 'Knight'
+    given-names: 'Robert'
+  - family-names: 'Lachaux'
+    given-names: 'Jean-Philippe'
+  - family-names: 'Lau'
+    given-names: 'Jonathan C.'
+  - family-names: 'Lee-Messer'
+    given-names: 'Christopher'
+  - family-names: 'Lundstrom'
+    given-names: 'Brian N.'
+  - family-names: 'Miller'
+    given-names: 'Kai J.'
+  - family-names: 'Ojemann'
+    given-names: 'Jeffrey G.'
+  - family-names: 'Oostenveld'
+    given-names: 'Robert'
+  - family-names: 'Petridou'
+    given-names: 'Natalia'
+  - family-names: 'Piantoni'
+    given-names: 'Gio'
+  - family-names: 'Pigorini'
+    given-names: 'Andrea'
+  - family-names: 'Pouratian'
+    given-names: 'Nader'
+  - family-names: 'Ramsey'
+    given-names: 'Nick F.'
+  - family-names: 'Stolk'
+    given-names: 'Arjen'
+  - family-names: 'Swann'
+    given-names: 'Nicole C.'
+  - family-names: 'Tadel'
+    given-names: 'François'
+  - family-names: 'Voytek'
+    given-names: 'Bradley'
+  - family-names: 'Wandell'
+    given-names: 'Brian A.'
+  - family-names: 'Winawer'
+    given-names: 'Jonathan'
+  - family-names: 'Whitaker'
+    given-names: 'Kirstie'
+  - family-names: 'Zehl'
+    given-names: 'Lyuba'
+  - family-names: 'Hermes'
+    given-names: 'Dora'
+  year: 2019
+  journal: 'Scientific Data'
+  volume: '6'
+  start: '102'
+  doi: 10.1038/s41597-019-0105-7
+  notes: 'PMID: 31239438'
+- type: article
+  title: 'Normative intracranial EEG maps epileptogenic tissues in focal epilepsy'
+  authors:
+  - family-names: 'Bernabei'
+    given-names: 'John M'
+  - family-names: 'Sinha'
+    given-names: 'Nishant'
+  - family-names: 'Arnold'
+    given-names: 'T Campbell'
+  - family-names: 'Conrad'
+    given-names: 'Erin'
+  - family-names: 'Ong'
+    given-names: 'Ian'
+  - family-names: 'Pattnaik'
+    given-names: 'Akash R'
+  - family-names: 'Stein'
+    given-names: 'Joel M'
+  - family-names: 'Shinohara'
+    given-names: 'Russell T'
+  - family-names: 'Lucas'
+    given-names: 'Timothy H'
+  - family-names: 'Bassett'
+    given-names: 'Dani S'
+  - family-names: 'Davis'
+    given-names: 'Kathryn A'
+  - family-names: 'Litt'
+    given-names: 'Brian'
+  year: 2022
+  journal: 'Brain'
+  volume: '145'
+  start: '1949'
+  end: '1961'
+  doi: 10.1093/brain/awab480
+  notes: 'PMID: 35640886'
+- type: article
+  title: 'The PREP pipeline: standardized preprocessing for large-scale EEG analysis'
+  authors:
+  - family-names: 'Bigdely-Shamlo'
+    given-names: 'Nima'
+  - family-names: 'Mullen'
+    given-names: 'Tim'
+  - family-names: 'Kothe'
+    given-names: 'Christian'
+  - family-names: 'Su'
+    given-names: 'Kyung-Min'
+  - family-names: 'Robbins'
+    given-names: 'Kay A.'
+  year: 2015
+  journal: 'Frontiers in Neuroinformatics'
+  volume: '9'
+  start: '16'
+  doi: 10.3389/fninf.2015.00016
+  notes: 'PMID: 26150785'
+- type: data
+  title: 'Multi-Expert Seizure Annotation'
+  authors:
+  - family-names: 'Ojemann'
+    given-names: 'William K'
+  - family-names: 'Zhou'
+    given-names: 'Daniel'
+  - family-names: 'Armstrong'
+    given-names: 'Caren'
+  - family-names: 'Sinha'
+    given-names: 'Nishant'
+  - family-names: 'Litt'
+    given-names: 'Brian'
+  - family-names: 'Conrad'
+    given-names: 'Erin'
+  year: 2026
+  publisher:
+    name: 'Pennsieve Discover'
+  version: '3'
+  doi: 10.26275/dely-fzwx
+- type: data
+  title: 'HUP Interictal iEEG Atlas'
+  authors:
+  - family-names: 'Bernabei'
+    given-names: 'John'
+  - family-names: 'Litt'
+    given-names: 'Brian'
+  year: 2021
+  publisher:
+    name: 'Pennsieve Discover'
+  version: '1'
+  doi: 10.26275/lzhy-ox20

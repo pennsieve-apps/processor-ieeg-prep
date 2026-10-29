@@ -1,0 +1,158 @@
+# yaml-language-server: $schema=https://schemas.pennsieve.io/app-manifest/v1.json
+schemaVersion: "1.0"
+application:
+  name: iEEG Prep
+  description: >-
+    The first step of the epilepsy iEEG workflows. Reads BIDS-iEEG datasets (MNE-BIDS) or plain
+    EDF/EDF+, BrainVision, FIF and MEF3 recordings with optional expert labels, keeps the SEEG/ECoG
+    channels, finds bad channels (flat, line-noise dominated, line-length and amplitude outliers),
+    re-references (bipolar by default), notch- and high-pass-filters, and writes one BIDS-iEEG
+    derivative (EDF+ with per-channel range, channels/events/electrodes sidecars with SOZ, resected,
+    onset and spread labels and coordinates, recordings.csv) plus a QC table and figures.
+  type: processor
+  tags:
+    - ieeg
+    - seeg
+    - ecog
+    - eeg
+    - electrophysiology
+    - epilepsy
+    - neuroscience
+    - bids
+    - preprocessing
+    - quality-control
+runtime:
+  # One recording at a time. The demo (24 SEEG clips, 1024 Hz, 94-230 contacts, 4-8 min each)
+  # peaks at 1.04 GB and takes 9 min under amd64 emulation; a synthetic 1 h, 128-channel,
+  # 1024 Hz recording peaks at 2.3 GB RSS (see README "Runtime").
+  cpu: 2048
+  memory: 4096
+  computeTypes:
+    - standard
+  timeoutSeconds: 7200
+parameters:
+  - name: RECORDINGS
+    type: string
+    label: Recordings
+    description: >-
+      Glob(s), comma-separated, selecting which recordings to process, matched against the
+      recording id (BIDS stem, e.g. sub-HUP224_ses-postimplant_task-ictal*), the file name or its
+      path in the input. * processes everything.
+    defaultValue: "*"
+  - name: MONTAGE
+    type: string
+    label: Montage
+    description: >-
+      bipolar: neighbouring contacts on the same electrode (LA01-LA02), skipping pairs with a bad
+      contact; data that are already bipolar are kept as they are. car: common average of the good
+      channels. as-recorded: no re-referencing. auto: as-recorded when the names already look
+      bipolar or have no electrode/contact structure (e.g. ch0001), bipolar otherwise.
+    defaultValue: bipolar
+    validValues: [bipolar, car, as-recorded, auto]
+  - name: LINE_FREQ
+    type: string
+    label: Line frequency (Hz)
+    description: >-
+      Mains frequency notched out with its harmonics below Nyquist: auto takes PowerLineFrequency
+      from the BIDS sidecar (or the FIF file), else 60. 0 disables the notch.
+    defaultValue: auto
+  - name: HIGHPASS
+    type: number
+    label: High-pass (Hz)
+    description: Zero-phase Butterworth high-pass cutoff; 0 disables it.
+    defaultValue: 0.5
+    min: 0
+  - name: LOWPASS
+    type: number
+    label: Low-pass (Hz)
+    description: Zero-phase Butterworth low-pass cutoff; 0 (default) keeps the full band, which HFO detection needs.
+    defaultValue: 0
+    min: 0
+  - name: INCLUDE_SCALP
+    type: boolean
+    label: Keep scalp EEG
+    description: Keep scalp EEG channels (type EEG or 10-20 names such as C3, Cz) instead of dropping them.
+    defaultValue: false
+  - name: IEEG_TYPE
+    type: string
+    label: Type of untyped channels
+    description: Channel type given to brain channels of files that do not record types (EDF, BrainVision, MEF3 without BIDS sidecars).
+    defaultValue: seeg
+    validValues: [seeg, ecog]
+  - name: LABELS_FILE
+    type: string
+    label: Labels file
+    description: >-
+      Name of the optional labels CSV looked for anywhere in the input: subject, recording_id,
+      channel, soz, resected, onset, spread, onset_s (see the README).
+    defaultValue: labels.csv
+  - name: FLAT_UV
+    type: number
+    label: Flat threshold (µV)
+    description: A channel whose standard deviation is below this (or with more than half its samples repeated) is bad (flat).
+    defaultValue: 0.5
+    min: 0
+  - name: BAD_Z
+    type: number
+    label: Outlier robust z
+    description: >-
+      A channel is bad when the robust z-score (median/MAD across channels of the same type, of
+      log10 line length or log10 amplitude) exceeds this.
+    defaultValue: 5
+    min: 0
+  - name: LINE_NOISE_MAX
+    type: number
+    label: Line-noise ratio
+    description: A channel is bad when more than this fraction of its 1-250 Hz power lies within ±1 Hz of the line frequency and its harmonics.
+    defaultValue: 0.5
+    min: 0
+    max: 1
+  - name: BASELINE_GAP_S
+    type: number
+    label: Baseline gap (s)
+    description: The pre-ictal baseline ends this many seconds before the seizure onset.
+    defaultValue: 10
+    min: 0
+  - name: BASELINE_MAX_S
+    type: number
+    label: Baseline length (s)
+    description: The baseline runs from the recording start for at most this many seconds.
+    defaultValue: 90
+    min: 0
+  - name: VERIFY_EDF
+    type: boolean
+    label: Verify EDF
+    description: Read every written EDF back with MNE and fail the recording if any value differs by more than half a quantisation step.
+    defaultValue: true
+inputs:
+  - name: ieeg
+    description: >-
+      A BIDS-iEEG dataset (sub-*/[ses-*/]ieeg/*_ieeg.{edf,vhdr,fif} with channels/events/electrodes
+      sidecars) or plain recordings (*.edf, *.bdf, *.vhdr with .eeg/.vmrk, *.fif, *.mefd folders or
+      *.mefd.zip / .tar / .tar.gz), anywhere in the input (folders and symlinks followed), and an
+      optional labels.csv.
+    placement: subfolder
+    required: true
+# Two outputs: each is written to its own folder, OUTPUT_DIR/<name>/.
+outputs:
+  - name: ieeg
+    description: >-
+      The BIDS-iEEG derivative: dataset_description.json, recordings.csv, and per recording
+      <stem>_desc-preproc_ieeg.edf (EDF+, µV, per-channel physical range), _ieeg.json,
+      _channels.tsv (status, contacts, soz/resected/onset/spread, x/y/z, space, roi) and
+      _events.tsv (seizure, baseline, artifact); per subject _desc-preproc_electrodes.tsv; provenance.json.
+    mediaTypes:
+      - application/edf
+      - text/tab-separated-values
+      - text/csv
+      - application/json
+  - name: qc
+    description: >-
+      qc.csv (recording_id, channel, status, reason, line_length_z, amplitude_z, line_noise_ratio,
+      dropped_type, amplitude_uv, line_length_uv: one row per source channel) and a figure per
+      recording (<recording_id>.png: 10 s of the output traces and the status of every source
+      channel); provenance.json.
+    mediaTypes:
+      - text/csv
+      - image/png
+      - application/json

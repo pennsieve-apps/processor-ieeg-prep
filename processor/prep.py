@@ -247,7 +247,13 @@ def _process(c, src: S.Source, notes: list[str], params: Params, labelset: L.Lab
     # outliers; flatness and line noise are judged on the channel as recorded.
     raw_mets = [dsp.metrics(data[j, qs:qe], sfreq, line_freq, qcf) for j in range(len(kept))]
     live = [j for j, m in enumerate(raw_mets) if m.sd_raw >= params.flat_uv and m.zero_diff_fraction <= 0.5]
-    medref = np.median(data[live, qs:qe], axis=0) if len(live) >= 3 else None
+    medref = None
+    if len(live) >= 3:   # in time chunks: a fancy-indexed copy of every channel would double the memory
+        medref = np.empty(qe - qs, dtype=np.float32)
+        step = max(int(10 * sfreq), 1)
+        for a in range(qs, qe, step):
+            b = min(a + step, qe)
+            medref[a - qs:b - qs] = np.median(data[live, a:b], axis=0)
     mets = []
     for j in range(len(kept)):
         if medref is None:
