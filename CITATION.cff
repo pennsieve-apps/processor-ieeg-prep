@@ -1,5 +1,6 @@
 cff-version: "1.2.0"
-message: If you use this app, please cite it and the works it builds on, listed under references.
+message: >-
+  If you use this app, please cite the work it implements (preferred-citation), this release, and Pennsieve (RRID:SCR_021677); the other works it builds on are listed under references.
 type: software
 title: iEEG Prep
 abstract: The first step of the epilepsy iEEG workflows. Reads BIDS-iEEG datasets (MNE-BIDS) or plain
@@ -20,6 +21,19 @@ keywords:
 - bids
 - preprocessing
 - quality-control
+# The work this app implements; the release report's "How to cite" puts it first.
+preferred-citation:
+  type: article
+  title: MEG and EEG data analysis with MNE-Python
+  authors:
+  - family-names: Gramfort
+    given-names: Alexandre
+  year: 2013
+  journal: Frontiers in Neuroscience
+  volume: '7'
+  start: '267'
+  doi: 10.3389/fnins.2013.00267
+  notes: 'PMID: 24431986'
 references:
 - type: article
   title: 'MEG and EEG data analysis with MNE-Python'
